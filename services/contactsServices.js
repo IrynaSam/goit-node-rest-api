@@ -1,79 +1,25 @@
-import fs from "fs/promises";
-import path from "path";
-import { nanoid } from "nanoid";
+import Contact from "../models/Contact.js";
 
-const contactsPath = path.resolve("db", "contacts.json");
-
-async function listContacts() {
-	try {
-		const data = await fs.readFile(contactsPath, "utf8");
-		return JSON.parse(data);
-	} catch (error) {
-		throw error;
-	}
+function listContacts(search = {}) {
+	const { filter = {} } = search;
+	return Contact.find(filter);
 }
 
 async function getContactById(contactId) {
-	try {
-		const contacts = await listContacts();
-		const contact = contacts.find((contact) => contact.id === contactId);
-		return contact || null;
-	} catch (error) {
-		throw error;
-	}
+	const result = await Contact.findById(contactId);
+	return result;
 }
 
-async function removeContact(contactId) {
-	try {
-		const contacts = await listContacts();
-		const index = contacts.findIndex((contact) => contact.id === contactId);
-		if (index !== -1) {
-			const [removedContact] = contacts.splice(index, 1);
-			await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-			return removedContact;
-		}
-		return null;
-	} catch (error) {
-		throw error;
-	}
+function removeContact(contactId) {
+	return Contact.findByIdAndDelete(contactId);
 }
 
-async function addContact(name, email, phone) {
-	try {
-		const contacts = await listContacts();
-		const newContact = {
-			id: nanoid(),
-			name,
-			email,
-			phone,
-		};
-		contacts.push(newContact);
-		await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-		return newContact;
-	} catch (error) {
-		throw error;
-	}
+function addContact(data) {
+	return Contact.create(data);
 }
 
-async function updateContact(contactId, updateData) {
-	try {
-		const contacts = await listContacts();
-		const contactIndex = contacts.findIndex(
-			(contact) => contact.id === contactId
-		);
-		if (contactIndex === -1) {
-			return null;
-		}
-		const updatedContact = {
-			...contacts[contactIndex],
-			...updateData,
-		};
-		contacts[contactIndex] = updatedContact;
-		await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-		return updatedContact;
-	} catch (error) {
-		throw error;
-	}
+function updateContact(contactId, updateData) {
+	return Contact.findByIdAndUpdate(contactId, updateData);
 }
 
 export {
